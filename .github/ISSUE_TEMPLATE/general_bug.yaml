@@ -1,4 +1,4 @@
-name: Bug Report
+name: General Bug
 description: Report incorrect behavior in DarkflameServer
 title: "BUG: "
 labels: ["bug", "triage"]
