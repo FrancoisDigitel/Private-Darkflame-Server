@@ -1,0 +1,40 @@
+name: Bug Report
+description: Report incorrect behavior in DarkflameServer
+title: "BUG: "
+labels: ["bug", "triage"]
+
+body:
+  - type: checkboxes
+    id: checks
+    attributes:
+      options:
+        - label: >
+            I have checked that this issue has not already been reported.
+          required: true
+        - label: >
+            I have tried multiple times and restarted my Client
+          required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Issue Description
+      description: >
+        Please provide a description of the issue. please also include pictures that showcase the issue if possible.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: >
+        Please provide a concise list of steps needed to reproduce this issue.
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: >
+        Please describe what you expected to happen instead of the issue.
+    validations:
+      required: true
