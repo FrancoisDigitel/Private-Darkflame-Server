@@ -423,7 +423,7 @@ void SGCannon::SpawnNewModel(Entity *self) {
 
             if (lootMatrix != 0) {
                 std::unordered_map<LOT, int32_t> toDrop = {};
-                Loot::CalculateLootMatrix(lootMatrix, player, toDrop);
+                toDrop = LootGenerator::Instance().RollLootMatrix(player, lootMatrix);
 
                 for (auto drop : toDrop) {
                     rewardModel->OnFireEventServerSide(self, ModelToBuildEvent, drop.first);
@@ -579,9 +579,11 @@ void SGCannon::StopGame(Entity *self, bool cancel) {
                 self->GetObjectID(),
                 "performact_score"
             );
+            missionComponent->Progress(MissionTaskType::MISSION_TASK_TYPE_MINIGAME, self->GetVar<uint32_t>(MaxStreakVariable), self->GetObjectID(), "performact_streak");
+            missionComponent->Progress(MissionTaskType::MISSION_TASK_TYPE_ACTIVITY, m_CannonLot, 0, "", self->GetVar<uint32_t>(TotalScoreVariable));
         }
 
-        Loot::GiveActivityLoot(player, self, GetGameID(self), self->GetVar<uint32_t>(TotalScoreVariable));
+        LootGenerator::Instance().GiveActivityLoot(player, self, GetGameID(self), self->GetVar<uint32_t>(TotalScoreVariable));
 
         StopActivity(self, player->GetObjectID(), self->GetVar<uint32_t>(TotalScoreVariable),
                 self->GetVar<uint32_t>(MaxStreakVariable), percentage);
@@ -645,10 +647,6 @@ void SGCannon::RegisterHit(Entity* self, Entity* target, const std::string& time
 
         if (!self->GetVar<bool>(SuperChargeActiveVariable)) {
             self->SetVar<uint32_t>(u"m_curStreak", self->GetVar<uint32_t>(u"m_curStreak") + 1);
-            
-            if (self->GetVar<uint32_t>(u"m_curStreak") > 12) {
-                self->SetVar<uint32_t>(u"m_curStreak", 12);
-            }
         }
     }
     else {
@@ -693,6 +691,14 @@ void SGCannon::RegisterHit(Entity* self, Entity* target, const std::string& time
     self->SetNetworkVar<uint32_t>(u"updateScore", newScore);
 
     self->SetNetworkVar<std::u16string>(u"beatHighScore", GeneralUtils::to_u16string(newScore));
+
+    auto* player = EntityManager::Instance()->GetEntity(self->GetVar<LWOOBJID>(PlayerIDVariable));
+    if (player == nullptr) return;
+
+    auto missionComponent = player->GetComponent<MissionComponent>();
+    if (missionComponent == nullptr) return;
+
+    missionComponent->Progress(MissionTaskType::MISSION_TASK_TYPE_SMASH, spawnInfo.lot, self->GetObjectID());
 }
 
 void SGCannon::UpdateStreak(Entity* self) 
@@ -722,6 +728,8 @@ void SGCannon::UpdateStreak(Entity* self)
             self->SetNetworkVar<bool>(u"UnMarkAll", true);
         }
     }
+    auto maxStreak = self->GetVar<uint32_t>(MaxStreakVariable);
+    if (maxStreak < curStreak) self->SetVar<uint32_t>(MaxStreakVariable, curStreak);
 }
 
 float_t SGCannon::GetCurrentBonus(Entity* self) 
